@@ -1,0 +1,10 @@
+.icon-no-color {
+    width: 24px;
+    height: 24px;
+    
+}
+.icon-default {
+    background: url("../icon/qlts-icon.svg") no-repeat;
+    width: 24px;
+    height: 24px;
+}
