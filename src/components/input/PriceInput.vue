@@ -5,42 +5,60 @@
             <span v-if="required" class="required">*</span>
         </label>
 
-        <input type="text" :value="displayValue" @input="onInput" @blur="format" />
+        <input type="text" :value="rawInput" @keydown="onKeydown" @input="onInput" @focus="onFocus" @blur="onBlur" />
     </div>
 </template>
 <script setup>
-import { computed } from 'vue'
+import { ref, watch } from 'vue'
+import { formatVND } from '@/utils/formatFns'
 
 defineProps({
     label: String,
     required: Boolean
 })
 
-const model = defineModel({
-    type: Number,
-    default: 0
-})
+const model = defineModel({ type: Number, default: 0 })
 
-/* Format tiền VN: 10000000 -> 10.000.000 */
-const formatVND = (value) => {
-    if (!value) return '0'
-    return value.toLocaleString('vi-VN')
+const rawInput = ref('0')
+const isFocus = ref(false)
+
+// Sync khi parent đổi model
+watch(model, (val) => {
+    if (isFocus.value) return
+    rawInput.value = formatVND(val ?? 0)
+}, { immediate: true })
+
+const onKeydown = (e) => {
+    const allow =
+        /[0-9]/.test(e.key) ||
+        ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)
+
+    if (!allow) e.preventDefault()
 }
 
-/* Hiển thị */
-const displayValue = computed(() => formatVND(model.value))
-
-/* Khi nhập */
 const onInput = (e) => {
-    const raw = e.target.value.replace(/\D/g, '')
-    model.value = raw === '' ? 0 : Number(raw)
+    const clean = e.target.value.replace(/\D/g, '')
+    rawInput.value = clean        // cho phép rỗng
+    model.value = clean === '' ? 0 : Number(clean)
 }
 
-/* Blur -> format lại */
-const format = () => {
-    model.value = Number(model.value) || 0
+const onFocus = () => {
+    isFocus.value = true
+    rawInput.value = model.value.toString()
 }
+
+const onBlur = () => {
+    isFocus.value = false
+
+    if (rawInput.value === '') {
+        model.value = 0
+    }
+
+    rawInput.value = formatVND(model.value)
+}
+
 </script>
+
 <style scoped>
 .price-input {
     display: flex;

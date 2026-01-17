@@ -5,7 +5,7 @@
             <thead>
                 <tr>
                     <th class="checkbox-col">
-                        <input type="checkbox" />
+                        <input type="checkbox" :checked="isAllSelected" @change="handleChoseAll($event)" />
                     </th>
                     <th>STT</th>
                     <th :class="{ 'text-right': field.type == 'number' }" v-for="field in fields" :key="field.id">{{
@@ -15,24 +15,23 @@
             </thead>
             <!-- table body  -->
             <tbody>
-                <tr v-for="(row, index) in pagedRows" :key="index">
+                <tr v-for="(row, index) in props.rows" :key="index" @mouseenter="hoverRow = index"
+                    @mouseleave="hoverRow = null">
                     <td class="checkbox-col">
-                        <input type="checkbox" />
+                        <input type="checkbox" :checked="selectIds.includes(row[props.type + 'Id'])"
+                            @change="HandleSelectIds(row[props.type + 'Id'], $event)" />
                     </td>
-                    <td>{{ row.stt }}</td>
+                    <td>{{ (form.pageIndex - 1) * form.pageSize + index + 1 }}</td>
                     <td :class="{ 'text-right': field.type == 'number' }" v-for="field in fields" :key="field.id">
                         {{ field.type == 'number' ? formatNumber(row[field.id]) : row[field.id] }}
                     </td>
                     <td class="action-col">
-                        <div class="action-buttons">
-                            <button class="action-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="1.5" stroke="currentColor" class="icon edit-icon">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
-                                </svg>
-                            </button>
-                        </div>
+
+                        <AssetModal :show="hoverRow === index" title="Sửa tài sản" type="update" :data="row">
+                        </AssetModal>
+                        <AssetModal :show="hoverRow === index" title="Nhân bản tài sản" type="coppy" :data="row">
+                        </AssetModal>
+
                     </td>
                 </tr>
             </tbody>
@@ -41,18 +40,21 @@
                     <td colspan="4">
 
                         <div class="footer-left ">
-                            <span class="total-record">Tổng số: <strong>{{ totalRecords }}</strong> bản ghi</span>
-                            <SelectDropdown v-model="currentPageSize" :options="pageSizeOptions" width="50px"
-                                height="25px" placement="top" />
+                            <span class="total-record">Tổng số: <strong>{{ form.total }}</strong> bản ghi</span>
+                            <SelectDropdown type="paging" v-model="form.pageSize" :options="pageSizeOptions"
+                                width="50px" height="25px" placement="top" />
                             <div class="pagination" style="display: inline-flex; vertical-align: middle;">
-                                <button class="page-btn" :disabled="currentPage === 1">
+                                <button class="page-btn" :disabled="form.pageIndex === 1"
+                                    @click="() => { form.pageIndex-- }">
                                     <div class="icon-pre"></div>
                                 </button>
                                 <button v-for="page in visiblePages" :key="page" class="page-btn"
-                                    :class="{ active: page === currentPage }">
+                                    :class="{ active: page === form.pageIndex }"
+                                    @click="() => { form.pageIndex = page }">
                                     {{ page }}
                                 </button>
-                                <button class="page-btn" :disabled="currentPage === totalPages">
+                                <button class="page-btn" :disabled="form.pageIndex === totalPages"
+                                    @click="() => { form.pageIndex++ }">
                                     <div class="icon-next"></div>
                                 </button>
                             </div>
@@ -71,10 +73,12 @@
     </div>
 </template>
 <script setup>
-import { pageSizeOptions } from '@/commons/constant/constant'
+import { pageSizeOptions, tableType } from '@/commons/constant/constant'
 import { formatNumber } from '@/utils/formatFns'
-import { ref, computed } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import SelectDropdown from '../input/SelectDropdown.vue'
+import AssetModal from '../modal/AssetModal.vue'
+import emitter from '@/bus/EventBus'
 
 const props = defineProps({
     fields: {
@@ -89,22 +93,53 @@ const props = defineProps({
         type: Array,
         default: () => pageSizeOptions
     },
+    paging: {
+        type: Object,
+    },
+    //cực kì quan trọng 
+    //tên bảng để lấy Id
     type: {
         type: String,
-        default: ''
+        default: tableType.ASSET,
+        validator: v => Object.values(tableType).includes(v),
     }
 })
+
+
+//hover
+const hoverRow = ref(null)
 // left footer 
 /* -------------------------
    Pagination
 ------------------------- */
-const currentPage = ref(1)
-const currentPageSize = ref(props.pageSize[0])
-const totalRecords = computed(() => props.rows.length)
-const totalPages = computed(() =>
-    Math.ceil(props.rows.length / currentPageSize.value)
+// clone props → tránh sửa trực tiếp props
+const form = reactive({ ...props.paging })
+//totalpages
+const totalPages = computed(() => {
+    return Math.ceil(form.total / form.pageSize);
+})
+watch(
+    () => props.rows,
+    () => {
+        //tính lại total
+        form.total = props.paging.total
+    }
 )
 
+
+watch(
+    () => form.pageSize,
+    () => {
+        emitter.emit('pageSizeChange', form.pageSize)
+    }
+)
+
+watch(
+    () => form.pageIndex,
+    () => {
+        emitter.emit('pageChange', form.pageIndex)
+    }
+)
 /**
  * Hàm tính toán các trang hiển thị trong phân trang
  * trường hợp có ít hơn 7 trang thì hiển thị tất cả
@@ -123,13 +158,13 @@ const visiblePages = computed(() => {
             pages.push(i)
         }
     } else {
-        if (currentPage.value <= 3) {
+        if (form.pageIndex <= 3) {
             for (let i = 1; i <= 5; i++) {
                 pages.push(i)
             }
             pages.push('...')
             pages.push(totalPages.value)
-        } else if (currentPage.value >= totalPages.value - 2) {
+        } else if (form.pageIndex >= totalPages.value - 2) {
             pages.push(1)
             pages.push('...')
             for (let i = totalPages.value - 4; i <= totalPages.value; i++) {
@@ -138,7 +173,7 @@ const visiblePages = computed(() => {
         } else {
             pages.push(1)
             pages.push('...')
-            for (let i = currentPage.value - 1; i <= currentPage.value + 1; i++) {
+            for (let i = form.pageIndex - 1; i <= form.pageIndex + 1; i++) {
                 pages.push(i)
             }
             pages.push('...')
@@ -148,30 +183,53 @@ const visiblePages = computed(() => {
     return pages
 })
 
-
-const pagedRows = computed(() => {
-    const start = (currentPage.value - 1) * currentPageSize.value
-    return props.rows.slice(start, start + currentPageSize.value)
-})
 // right footer 
-/**
- * Hàm định dạng lại tiền tệ theo định dạng Việt Nam
- * @param {*} num
- * @returns
- * createdby: dtdat - 1/11/2026
- */
+
 const totalQuantity = computed(() =>
-    props.rows.reduce((sum, row) => sum + (row.soLuong || 0), 0)
+    props.rows.reduce((sum, row) => sum + (row.assetQuantity || 0), 0)
 )
 const totalOriginalPrice = computed(() =>
-    props.rows.reduce((sum, row) => sum + (row.nguyenGia || 0), 0)
+    props.rows.reduce((sum, row) => sum + (row.assetOriginalPrice || 0), 0)
 )
 const totalCumulative = computed(() =>
-    props.rows.reduce((sum, row) => sum + (row.hmKhLuyKe || 0), 0)
+    props.rows.reduce((sum, row) => sum + (row.depreciationCumulative || 0), 0)
 )
 const totalRemainingValue = computed(() =>
-    props.rows.reduce((sum, row) => sum + (row.giaTriConLai || 0), 0)
+    props.rows.reduce((sum, row) => sum + (row.remainValue || 0), 0)
 )
+//delete
+const selectIds = ref([])
+//chọn tất cả 
+//nếu chọn tất cả thì checked
+const isAllSelected = computed(() => {
+    return props.rows.length > 0 &&
+        selectIds.value.length === props.rows.length
+})
+//nếu click vòa chọn tất cả thì 
+const handleChoseAll = (event) => {
+    // chọn tất cả
+    if (event.target.checked) {
+        //chuyển tất cả check box bằng check 
+        selectIds.value = props.rows.map(row => row[props.type + 'Id']);
+    } else {
+        //bỏ chọn tất cả
+        selectIds.value = []
+    }
+}
+const HandleSelectIds = (id, event) => {
+    if (event.target.checked) {
+        // thêm id
+        if (!selectIds.value.includes(id)) {
+            selectIds.value.push(id)
+        }
+    } else {
+        // bỏ id
+        selectIds.value = selectIds.value.filter(x => x !== id)
+
+    }
+    //truyền dữ liệu cho thằng button delete ở header
+    emitter.emit('DeleteMany', [...selectIds.value])
+}
 </script>
 <style scoped>
 .table-container {
@@ -214,7 +272,7 @@ const totalRemainingValue = computed(() =>
 }
 
 .data-table tbody tr:hover {
-    background-color: #f9f9f9;
+    background-color: rgba(26, 164, 200, .2);
 }
 
 .data-table tbody tr.row-selected {
@@ -242,7 +300,9 @@ const totalRemainingValue = computed(() =>
 }
 
 .action-col {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .action-buttons {
@@ -357,7 +417,7 @@ const totalRemainingValue = computed(() =>
 }
 
 .page-btn.active {
-    background-color: #f5f5f5;
+    background-color: #e9e9e9;
 }
 
 /* //icon  */

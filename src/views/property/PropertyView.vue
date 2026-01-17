@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import MisaHeader from '@/layouts/MisaHeader.vue';
 import ContentHeader from './ContentHeader.vue';
-import ContentBodyPro from './ContentBodyPro.vue';
 import ContentBody from './ContentBody.vue';
 
 </script>

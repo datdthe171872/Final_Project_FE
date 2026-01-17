@@ -5,40 +5,63 @@
             <span v-if="required" class="required">*</span>
         </label>
         <div class="number-wrapper">
-            <input type="text" :value="model" @input="onInput" />
+            <input type="text" :value="displayValue" @input="onInput" @keydown="onKeydown" @blur="onBlur" />
+
             <div class="spinner">
                 <span @click="increase">▲</span>
                 <span @click="decrease">▼</span>
             </div>
         </div>
+
     </div>
 </template>
 <script setup>
+import { ref, watch } from 'vue'
+defineProps({
+    label: String,
+    required: Boolean
+})
 const model = defineModel({
     type: Number,
     default: 0
 })
 
-defineProps({
-    label: String,
-    required: Boolean
-})
+const displayValue = ref('0')
 
-const increase = () => {
-    model.value++
-}
+// Sync khi parent thay đổi
+watch(model, (val) => {
+    displayValue.value = val?.toString() ?? '0'
+}, { immediate: true })
 
-const decrease = () => {
-    if (model.value > 0) {
-        model.value--
+const onKeydown = (e) => {
+    // Cho phép: số, backspace, delete, arrows, tab
+    const allow =
+        /[0-9]/.test(e.key) ||
+        ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)
+
+    if (!allow) {
+        e.preventDefault()   // ❌ chặn không cho hiển thị
     }
 }
 
 const onInput = (e) => {
     const val = e.target.value.replace(/\D/g, '')
+    displayValue.value = val
     model.value = val === '' ? 0 : Number(val)
 }
+
+const onBlur = () => {
+    if (displayValue.value === '') {
+        model.value = 0
+        displayValue.value = '0'
+    }
+}
+
+
+const increase = () => model.value++
+const decrease = () => { if (model.value > 0) model.value-- }
 </script>
+
 
 <style scoped>
 .number-input {
@@ -76,6 +99,16 @@ input {
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 14px;
+}
+
+/* Error */
+input.error {
+    border-color: #e53935;
+}
+
+.error-text {
+    font-size: 12px;
+    color: #e53935;
 }
 
 /* Spinner custom */

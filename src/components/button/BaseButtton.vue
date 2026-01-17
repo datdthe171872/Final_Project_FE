@@ -1,6 +1,9 @@
 <template>
-    <button class="base-button" :class="[`btn-${type}`, { 'btn-icon-only': !label && icon }]" :disabled="disabled"
-        @click="handleClick">
+    <button v-show="show" class="base-button" :class="[`btn-${type}`, { 'btn-icon-only': !label && icon }]"
+        :disabled="disabled" @click="handleClick">
+        <div class="icon" v-show="icon && !type == BUTTON_TYPE.ACTION">
+            <div :class="icon"></div>
+        </div>
         <div class="icon" v-show="icon">
             <div :class="icon"></div>
         </div>
@@ -29,6 +32,10 @@ const props = defineProps({
     disabled: {
         type: Boolean,
         default: false
+    },
+    show: {
+        type: Boolean,
+        default: true
     }
 });
 
@@ -108,8 +115,10 @@ const handleClick = (e) => {
 /* ================= OUTLINE ================= */
 .btn-outline {
     background-color: white;
-    color: #666;
+    border: 1px solid rgb(213, 213, 213);
+    color: black;
 }
+
 
 .btn-outline:hover {
     background-color: #f5f5f5;
@@ -128,6 +137,27 @@ const handleClick = (e) => {
     border-color: #ddd;
 }
 
+/* ================= CLOSE ================= */
+.btn-close {
+    background-color: white;
+    border: none;
+    color: black;
+}
+
+.btn-close:hover {
+    background-color: #f5f5f5;
+}
+
+/* ================= ACTION ================= */
+.btn-action {
+    background-color: transparent;
+    width: 25px;
+    border: none;
+    color: black;
+}
+
+
+
 /* ================= ICON ================= */
 .btn-icon {
     display: flex;
@@ -136,7 +166,7 @@ const handleClick = (e) => {
 }
 
 .btn-icon-only {
-    min-width: unset;
+    min-width: 30px;
     padding: 0 10px;
 }
 
@@ -153,8 +183,21 @@ const handleClick = (e) => {
 }
 
 .icon-close {
-    background: url('../../assets/icon/qlts-icon.svg') no-repeat -375px -287px;
-    width: 18px;
-    height: 18px;
+    background: url('../../assets/icon/qlts-icon.svg') no-repeat -291px -247px;
+    width: 10px;
+    height: 10px;
+    transform: scale(1.2);
+}
+
+.icon-edit {
+    background: url('../../assets/icon/qlts-icon.svg') no-repeat -156px -68px;
+    width: 16px;
+    height: 16px;
+}
+
+.icon-coppy {
+    background: url('../../assets/icon/qlts-icon.svg') no-repeat -244px -112px;
+    width: 16px;
+    height: 16px;
 }
 </style>

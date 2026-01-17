@@ -1,6 +1,7 @@
 <script setup>
 import { RouterView } from 'vue-router'
 import MisaSidebar from './layouts/MisaSidebar.vue';
+import BaseToast from './components/toast/BaseToast.vue';
 </script>
 
 <template>
@@ -10,6 +11,7 @@ import MisaSidebar from './layouts/MisaSidebar.vue';
       <RouterView></RouterView>
     </div>
   </div>
+  <BaseToast></BaseToast>
 </template>
 
 <style>
@@ -18,6 +20,7 @@ import MisaSidebar from './layouts/MisaSidebar.vue';
   padding: 0;
   box-sizing: border-box;
   font-size: 14px;
+  font-family: 'Roboto', sans-serif;
 }
 
 body {

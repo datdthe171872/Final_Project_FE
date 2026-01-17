@@ -5,50 +5,74 @@
             <span v-if="required" class="required">*</span>
         </label>
 
-        <input type="text" :class="{ error: hasError }" :value="inputValue" @input="onInput" @blur="format" />
+        <input type="text" :class="{ error: hasError }" :value="displayValue" @keydown="onKeydown" @input="onInput"
+            @blur="onBlur" @focus="onFocus" />
+
 
         <p v-if="hasError" class="error-text">
-            Tỷ lệ phần trăm không được vượt quá 100%
+            Vui lòng chỉ nhập số và tỷ lệ phần trăm không được vượt quá 100%
         </p>
     </div>
 </template>
 <script setup>
-import { formatPercent } from '@/utils/formatFns'
-import { ref, watch, defineProps } from 'vue'
+import { ref, watch } from 'vue'
 
 defineProps({
     label: String,
     required: Boolean
 })
 
-const model = defineModel({
-    type: Number,
-})
+const model = defineModel({ type: Number, default: 0 })
 
+const displayValue = ref('0')
 const hasError = ref(false)
-const inputValue = ref('0')
+const isFocus = ref(false)
 
-// Đồng bộ inputvalue với model (except when error)
+// Sync khi parent đổi model
 watch(model, (val) => {
-    if (!hasError.value) {
-        inputValue.value = val.toString().replace('.', ',')
-    }
-})
+    displayValue.value = val.toString().replace('.', ',')
+    hasError.value = false
+}, { immediate: true })
 
-// Validate và handle input
+const onKeydown = (e) => {
+    const allow =
+        /[0-9.,]/.test(e.key) ||
+        ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)
+
+    if (!allow) e.preventDefault()
+}
+
+const normalize = (val) => val.replace(',', '.')
+
 const onInput = (e) => {
-    inputValue.value = e.target.value
-    let num = formatPercent(e.target.value);
-    if (num < 0) {
+    const raw = e.target.value
+    displayValue.value = raw
+
+    const num = Number(normalize(raw))
+    if (isNaN(num) || num < 0 || num > 100) {
         hasError.value = true
         return
-    } else {
-        hasError.value = false
     }
+
+    hasError.value = false
     model.value = num
 }
 
+const onBlur = () => {
+    const num = Number(normalize(displayValue.value))
+    if (isNaN(num) || num < 0 || num > 100) {
+        hasError.value = true
+        model.value = 0
+        displayValue.value = '0'
+    } else {
+        displayValue.value = num.toString().replace('.', ',')
+    }
+}
 
+const onFocus = () => {
+    isFocus.value = true
+    hasError.value = false
+}
 </script>
 <style scoped>
 .percent-input {

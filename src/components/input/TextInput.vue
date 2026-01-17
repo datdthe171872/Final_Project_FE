@@ -1,10 +1,13 @@
 <template>
     <div class="input-group">
-        <label v-if="label" class="input-label">{{ label }}</label>
+        <label v-if="label" class="input-label">
+            {{ label }}
+            <span v-if="required" class="required">*</span>
+        </label>
 
-        <input v-show="type == 'text'" v-model="model" type="text" :disabled="disable" :placeholder="placeholder"
-            class="text-input" />
-        <input v-show="type == 'baseNum'" v-model="model" type="text" :disabled="disable"
+        <input :readonly="readonly" v-show="type == 'text'" v-model="model" type="text" :disabled="disable"
+            :placeholder="placeholder" class="text-input" />
+        <input :readonly="readonly" v-show="type == 'baseNum'" v-model="model" type="text" :disabled="disable"
             class="text-input text-right" />
     </div>
 </template>
@@ -27,6 +30,14 @@ defineProps({
         type: String,
         default: 'text',
         validator: (val) => ['text', 'baseNum'].includes(val)
+    },
+    readonly: {
+        type: Boolean,
+        default: false
+    },
+    required: {
+        type: Boolean,
+        default: false
     }
 });
 </script>
@@ -47,7 +58,7 @@ defineProps({
 .text-input {
     padding-left: 14px;
     padding-right: 14px;
-    border: 1px solid rgb(132, 132, 132);
+    border: 1px solid #ccc;
     border-radius: 4px;
     height: 36px;
 }
@@ -62,6 +73,10 @@ defineProps({
     cursor: not-allowed;
 }
 
+.text-input:read-only {
+    cursor: not-allowed;
+}
+
 .text-right {
     text-align: right;
 }
@@ -69,5 +84,9 @@ defineProps({
 /* Make placeholder text italic */
 .text-input::placeholder {
     font-style: italic;
+}
+
+.required {
+    color: red;
 }
 </style>

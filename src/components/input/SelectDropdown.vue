@@ -1,12 +1,14 @@
 <template>
     <div class="input-group" :style="{ width: width, height: height }">
-        <label v-if="label" class="input-label">{{ label }}</label>
-        <div class="custom-select-wrapper" @click="toggleDropdown" :style="{ width: width, height: height }">
+        <label v-if="label" class="input-label">{{ label }}
+            <span v-if="required" class="required">*</span>
+        </label>
+        <div class="custom-select-wrapper" @click="toggleDropdown">
             <div class="custom-select-display" :style="{ width: width, height: height }">
                 <div class="icon" v-show="props.icon">
                     <div class="icon-filter"></div>
                 </div>
-                <span :class="{ 'placeholder-text': !modelValue }">
+                <span :class="{ 'placeholder-text': !modelValue && type == 'modal' }">
                     {{ displayValue || placeholder || 'Chọn' }}
                 </span>
                 <div class="arrow-icon">
@@ -14,10 +16,10 @@
                 </div>
             </div>
             <div v-if="isOpen" :class="['custom-select-dropdown', placement]">
-                <div v-for="option in options" :key="option.title || option" class="custom-select-option"
-                    :class="{ selected: modelValue === option.title || modelValue === option }"
-                    @click.stop="selectOption(option.title || option)">
-                    {{ option.title || option }}
+                <div v-for="option in computedOptions" :key="option[valueField] || option" class="custom-select-option"
+                    :class="{ selected: modelValue === (option[valueField] ?? option) }"
+                    @click.stop="selectOption(option[valueField] ?? option)">
+                    {{ option[labelField] ?? option }}
                 </div>
             </div>
         </div>
@@ -39,12 +41,20 @@ const props = defineProps({
         type: String,
     },
     modelValue: {
-        type: [String, Number],
+        type: [String, Number, Object],
         default: null
     },
     options: {
         type: Array,
         default: () => []
+    },
+    labelField: {
+        type: String,
+        default: 'title'
+    },
+    valueField: {
+        type: String,
+        default: 'title'
     },
     width: {
         type: String,
@@ -58,15 +68,43 @@ const props = defineProps({
         type: String,
         default: 'bottom', // 'bottom' hoặc 'top'
         validator: (val) => ['bottom', 'top'].includes(val)
+    },
+    type: {
+        type: String,
+        default: 'filter',
+        validator: (val) => ['modal', 'filter', 'paging'].includes(val)
+    },
+    required: {
+        type: Boolean,
+        default: false
     }
 })
+
 const emit = defineEmits(['update:modelValue'])
 const displayValue = computed(() => {
-    if (props.modelValue) {
-        const option = props.options.find((opt) => opt.title === props.modelValue)
-        return option ? option.title : props.modelValue
+    if (props.modelValue !== null && props.modelValue !== undefined && props.modelValue !== '') {
+        const option = computedOptions.value.find(
+            (opt) => (opt[props.valueField] ?? opt) === props.modelValue
+        )
+        return option ? (option[props.labelField] ?? option) : props.modelValue
+    }
+    // Nếu modelValue là '', tìm option "Tất cả"
+    if (props.modelValue === '') {
+        const allOption = computedOptions.value.find(
+            (opt) => (opt[props.valueField] ?? opt) === ''
+        )
+        return allOption ? (allOption[props.labelField] ?? allOption) : ''
     }
     return ''
+})
+const computedOptions = computed(() => {
+    if (props.type == 'filter') {
+        return [
+            { [props.labelField]: 'Tất cả', [props.valueField]: '' },
+            ...props.options
+        ]
+    }
+    return props.options
 })
 const isOpen = ref(false)
 const toggleDropdown = () => {
@@ -134,7 +172,10 @@ onUnmounted(() => {
     pointer-events: auto;
 }
 
-.placeholder-text {}
+.placeholder-text {
+    color: #acabab;
+    font-style: italic;
+}
 
 .custom-select-dropdown {
     position: absolute;
@@ -180,6 +221,10 @@ onUnmounted(() => {
     background-color: #e6f2ff;
     color: #2680eb;
     font-weight: 500;
+}
+
+.required {
+    color: red;
 }
 
 .arrow-down {

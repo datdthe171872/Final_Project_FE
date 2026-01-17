@@ -3,13 +3,14 @@
         <div class="icon">
             <div class="icon-search"></div>
         </div>
-        <input type="text" :placeholder="placeholder" @focus="isFocus = true" @blur="isFocus = false" />
+        <input type="text" v-model="model" :placeholder="placeholder" @focus="isFocus = true" @blur="isFocus = false" />
     </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 
+const model = defineModel();
 defineProps({
     placeholder: {
         type: String,
