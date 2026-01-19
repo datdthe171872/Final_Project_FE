@@ -8,8 +8,12 @@
                         <input type="checkbox" :checked="isAllSelected" @change="handleChoseAll($event)" />
                     </th>
                     <th>STT</th>
-                    <th :class="{ 'text-right': field.type == 'number' }" v-for="field in fields" :key="field.id">
-                        {{ field.label }}
+                    <th v-for="field in fields" :key="field.id" :class="{ 'text-right': field.type == 'number' }"
+                        :style="columnWidths[field.id] ? { width: columnWidths[field.id] + 'px' } : {}">
+                        <div class="th-content">
+                            {{ field.label }}
+                            <span class="col-resizer" @mousedown="startResize($event, field.id)"></span>
+                        </div>
                     </th>
                     <th class="action-col">Chức năng</th>
                 </tr>
@@ -24,7 +28,8 @@
                             @change="HandleSelectIds(row[props.type + 'Id'], $event)" @click.stop @mousedown.stop />
                     </td>
                     <td>{{ (form.pageIndex - 1) * form.pageSize + index + 1 }}</td>
-                    <td :class="{ 'text-right': field.type == 'number' }" v-for="field in fields" :key="field.id">
+                    <td v-for="field in fields" :key="field.id" :class="{ 'text-right': field.type == 'number' }"
+                        :style="{ width: columnWidths[field.id] + 'px' }">
                         {{ field.type == 'number' ? formatNumber(row[field.id]) : row[field.id] }}
                     </td>
                     <td class="action-col">
@@ -83,16 +88,7 @@
 <script setup>
 import { pageSizeOptions, tableType } from '@/commons/constant/constant'
 import { formatNumber } from '@/utils/formatFns'
-import {
-    ref,
-    computed,
-    reactive,
-    watch,
-    onMounted,
-    onBeforeMount,
-    onUnmounted,
-    onBeforeUnmount,
-} from 'vue'
+import { ref, computed, reactive, watch, onMounted, onBeforeUnmount } from 'vue'
 import SelectDropdown from '../input/SelectDropdown.vue'
 import AssetModal from '../modal/AssetModal.vue'
 import emitter from '@/bus/EventBus'
@@ -284,6 +280,41 @@ onBeforeUnmount(() => {
     window.removeEventListener('keydown', keyHandler)
     emitter.off('ClearAssetIds', handleResetIds)
 })
+
+//resize cột
+const columnWidths = reactive({})
+
+// khởi tạo width mặc định
+onMounted(() => {
+    props.fields.forEach((f) => {
+        columnWidths[f.id] = null
+    })
+})
+
+let startX = 0
+let startWidth = 0
+let resizingKey = null
+
+function startResize(e, key) {
+    startX = e.clientX
+    startWidth = columnWidths[key] || e.target.parentElement.offsetWidth
+    resizingKey = key
+
+    document.addEventListener('mousemove', resizing)
+    document.addEventListener('mouseup', stopResize)
+}
+
+function resizing(e) {
+    if (!resizingKey) return
+    const diff = e.clientX - startX
+    columnWidths[resizingKey] = Math.max(60, startWidth + diff)
+}
+
+function stopResize() {
+    resizingKey = null
+    document.removeEventListener('mousemove', resizing)
+    document.removeEventListener('mouseup', stopResize)
+}
 </script>
 <style scoped>
 .table-container {
@@ -357,6 +388,27 @@ onBeforeUnmount(() => {
     cursor: pointer;
 }
 
+.th-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.col-resizer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+}
+
+.col-resizer:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
 .action-col {
     display: flex;
     align-items: center;
@@ -384,12 +436,6 @@ onBeforeUnmount(() => {
 
 .action-btn:hover {
     background-color: #f0f0f0;
-}
-
-.action-btn svg {
-    width: 18px;
-    height: 18px;
-    color: #666666;
 }
 
 .data-table tfoot tr {
