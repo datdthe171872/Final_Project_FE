@@ -1,6 +1,6 @@
 <template>
     <div class="table-container">
-        <table class="data-table">
+        <table class="data-table" ref="tableRef" tabindex="1" v-if="props.rows.length > 0">
             <!-- table head -->
             <thead>
                 <tr>
@@ -8,58 +8,65 @@
                         <input type="checkbox" :checked="isAllSelected" @change="handleChoseAll($event)" />
                     </th>
                     <th>STT</th>
-                    <th :class="{ 'text-right': field.type == 'number' }" v-for="field in fields" :key="field.id">{{
-                        field.label }}</th>
+                    <th :class="{ 'text-right': field.type == 'number' }" v-for="field in fields" :key="field.id">
+                        {{ field.label }}
+                    </th>
                     <th class="action-col">Chức năng</th>
                 </tr>
             </thead>
             <!-- table body  -->
             <tbody>
-                <tr v-for="(row, index) in props.rows" :key="index" @mouseenter="hoverRow = index"
+                <tr :class="{ active: index === activeIndex }" @click="activeIndex = index"
+                    v-for="(row, index) in props.rows" :key="index" @mouseenter="hoverRow = index"
                     @mouseleave="hoverRow = null">
                     <td class="checkbox-col">
                         <input type="checkbox" :checked="selectIds.includes(row[props.type + 'Id'])"
-                            @change="HandleSelectIds(row[props.type + 'Id'], $event)" />
+                            @change="HandleSelectIds(row[props.type + 'Id'], $event)" @click.stop @mousedown.stop />
                     </td>
                     <td>{{ (form.pageIndex - 1) * form.pageSize + index + 1 }}</td>
                     <td :class="{ 'text-right': field.type == 'number' }" v-for="field in fields" :key="field.id">
                         {{ field.type == 'number' ? formatNumber(row[field.id]) : row[field.id] }}
                     </td>
                     <td class="action-col">
-
-                        <AssetModal :show="hoverRow === index" title="Sửa tài sản" type="update" :data="row">
+                        <AssetModal :show="activeIndex === index" title="Sửa tài sản" type="update" :data="row">
                         </AssetModal>
-                        <AssetModal :show="hoverRow === index" title="Nhân bản tài sản" type="coppy" :data="row">
+                        <AssetModal :show="activeIndex === index" title="Nhân bản tài sản" type="coppy" :data="row">
                         </AssetModal>
-
                     </td>
                 </tr>
             </tbody>
             <tfoot>
                 <tr class="summary-row">
                     <td colspan="4">
-
-                        <div class="footer-left ">
+                        <div class="footer-left">
                             <span class="total-record">Tổng số: <strong>{{ form.total }}</strong> bản ghi</span>
                             <SelectDropdown type="paging" v-model="form.pageSize" :options="pageSizeOptions"
                                 width="50px" height="25px" placement="top" />
-                            <div class="pagination" style="display: inline-flex; vertical-align: middle;">
-                                <button class="page-btn" :disabled="form.pageIndex === 1"
-                                    @click="() => { form.pageIndex-- }">
+                            <div class="pagination" style="display: inline-flex; vertical-align: middle">
+                                <button class="page-btn" :disabled="form.pageIndex === 1" @click="
+                                    () => {
+                                        form.pageIndex--
+                                    }
+                                ">
                                     <div class="icon-pre"></div>
                                 </button>
                                 <button v-for="page in visiblePages" :key="page" class="page-btn"
-                                    :class="{ active: page === form.pageIndex }"
-                                    @click="() => { form.pageIndex = page }">
+                                    :class="{ active: page === form.pageIndex }" @click="
+                                        () => {
+                                            form.pageIndex = page
+                                        }
+                                    ">
                                     {{ page }}
                                 </button>
-                                <button class="page-btn" :disabled="form.pageIndex === totalPages"
-                                    @click="() => { form.pageIndex++ }">
+                                <button class="page-btn" :disabled="form.pageIndex === totalPages" @click="
+                                    () => {
+                                        form.pageIndex++
+                                    }
+                                ">
                                     <div class="icon-next"></div>
                                 </button>
                             </div>
                         </div>
-
                     </td>
                     <td colspan="2" class="summary-label">Tổng cộng</td>
                     <td class="text-right">{{ totalQuantity }}</td>
@@ -70,12 +77,22 @@
                 </tr>
             </tfoot>
         </table>
+        <div class="no-data" v-else>không tìm thấy dữ liệu</div>
     </div>
 </template>
 <script setup>
 import { pageSizeOptions, tableType } from '@/commons/constant/constant'
 import { formatNumber } from '@/utils/formatFns'
-import { ref, computed, reactive, watch } from 'vue'
+import {
+    ref,
+    computed,
+    reactive,
+    watch,
+    onMounted,
+    onBeforeMount,
+    onUnmounted,
+    onBeforeUnmount,
+} from 'vue'
 import SelectDropdown from '../input/SelectDropdown.vue'
 import AssetModal from '../modal/AssetModal.vue'
 import emitter from '@/bus/EventBus'
@@ -83,32 +100,31 @@ import emitter from '@/bus/EventBus'
 const props = defineProps({
     fields: {
         type: Array,
-        required: true
+        required: true,
     },
     rows: {
         type: Array,
-        required: true
+        required: true,
     },
     pageSize: {
         type: Array,
-        default: () => pageSizeOptions
+        default: () => pageSizeOptions,
     },
     paging: {
         type: Object,
     },
-    //cực kì quan trọng 
+    //cực kì quan trọng
     //tên bảng để lấy Id
     type: {
         type: String,
         default: tableType.ASSET,
-        validator: v => Object.values(tableType).includes(v),
-    }
+        validator: (v) => Object.values(tableType).includes(v),
+    },
 })
-
 
 //hover
 const hoverRow = ref(null)
-// left footer 
+// left footer
 /* -------------------------
    Pagination
 ------------------------- */
@@ -116,29 +132,28 @@ const hoverRow = ref(null)
 const form = reactive({ ...props.paging })
 //totalpages
 const totalPages = computed(() => {
-    return Math.ceil(form.total / form.pageSize);
+    return Math.ceil(form.total / form.pageSize)
 })
 watch(
     () => props.rows,
     () => {
         //tính lại total
         form.total = props.paging.total
-    }
+    },
 )
-
 
 watch(
     () => form.pageSize,
     () => {
         emitter.emit('pageSizeChange', form.pageSize)
-    }
+    },
 )
 
 watch(
     () => form.pageIndex,
     () => {
         emitter.emit('pageChange', form.pageIndex)
-    }
+    },
 )
 /**
  * Hàm tính toán các trang hiển thị trong phân trang
@@ -183,34 +198,34 @@ const visiblePages = computed(() => {
     return pages
 })
 
-// right footer 
+// right footer
 
 const totalQuantity = computed(() =>
-    props.rows.reduce((sum, row) => sum + (row.assetQuantity || 0), 0)
+    props.rows.reduce((sum, row) => sum + (row.assetQuantity || 0), 0),
 )
 const totalOriginalPrice = computed(() =>
-    props.rows.reduce((sum, row) => sum + (row.assetOriginalPrice || 0), 0)
+    props.rows.reduce((sum, row) => sum + (row.assetOriginalPrice || 0), 0),
 )
 const totalCumulative = computed(() =>
-    props.rows.reduce((sum, row) => sum + (row.depreciationCumulative || 0), 0)
+    props.rows.reduce((sum, row) => sum + (row.depreciationCumulative || 0), 0),
 )
 const totalRemainingValue = computed(() =>
-    props.rows.reduce((sum, row) => sum + (row.remainValue || 0), 0)
+    props.rows.reduce((sum, row) => sum + (row.remainValue || 0), 0),
 )
+
 //delete
 const selectIds = ref([])
-//chọn tất cả 
+//chọn tất cả
 //nếu chọn tất cả thì checked
 const isAllSelected = computed(() => {
-    return props.rows.length > 0 &&
-        selectIds.value.length === props.rows.length
+    return props.rows.length > 0 && selectIds.value.length === props.rows.length
 })
-//nếu click vòa chọn tất cả thì 
+//nếu click vòa chọn tất cả thì
 const handleChoseAll = (event) => {
     // chọn tất cả
     if (event.target.checked) {
-        //chuyển tất cả check box bằng check 
-        selectIds.value = props.rows.map(row => row[props.type + 'Id']);
+        //chuyển tất cả check box bằng check
+        selectIds.value = props.rows.map((row) => row[props.type + 'Id'])
     } else {
         //bỏ chọn tất cả
         selectIds.value = []
@@ -224,12 +239,51 @@ const HandleSelectIds = (id, event) => {
         }
     } else {
         // bỏ id
-        selectIds.value = selectIds.value.filter(x => x !== id)
-
+        selectIds.value = selectIds.value.filter((x) => x !== id)
     }
     //truyền dữ liệu cho thằng button delete ở header
     emitter.emit('DeleteMany', [...selectIds.value])
 }
+//di chueyenr lên xuống
+const activeIndex = ref(0)
+//hàm reset lại danh sách tài sản xóa
+const handleResetIds = (payload) => {
+    selectIds.value = payload
+}
+
+function keyHandler(e) {
+    if (e.code === 'ArrowDown' && activeIndex.value < props.rows.length - 1) {
+        activeIndex.value++
+    }
+
+    if (e.code === 'ArrowUp' && activeIndex.value > 0) {
+        activeIndex.value--
+    }
+
+    // Ctrl + Space => toggle checkbox dòng active
+    if (e.ctrlKey && e.code === 'Space') {
+        e.preventDefault()
+        const id = props.rows[activeIndex.value][props.type + 'Id']
+
+        if (!selectIds.value.includes(id)) {
+            selectIds.value.push(id)
+        } else {
+            selectIds.value = selectIds.value.filter((x) => x !== id)
+        }
+
+        emitter.emit('DeleteMany', [...selectIds.value])
+    }
+}
+
+onMounted(() => {
+    window.addEventListener('keydown', keyHandler)
+    emitter.on('ClearAssetIds', handleResetIds)
+})
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', keyHandler)
+    emitter.off('ClearAssetIds', handleResetIds)
+})
 </script>
 <style scoped>
 .table-container {
@@ -271,8 +325,12 @@ const HandleSelectIds = (id, event) => {
     transition: background-color 0.2s;
 }
 
+.data-table tr.active {
+    background-color: rgba(26, 164, 200, 0.2);
+}
+
 .data-table tbody tr:hover {
-    background-color: rgba(26, 164, 200, .2);
+    background: #e6f0ff;
 }
 
 .data-table tbody tr.row-selected {
@@ -295,7 +353,7 @@ const HandleSelectIds = (id, event) => {
     text-align: center;
 }
 
-.checkbox-col input[type="checkbox"] {
+.checkbox-col input[type='checkbox'] {
     cursor: pointer;
 }
 
@@ -343,8 +401,6 @@ const HandleSelectIds = (id, event) => {
     height: 40px;
 }
 
-
-
 .summary-row {
     background-color: white;
     font-weight: 600;
@@ -354,8 +410,6 @@ const HandleSelectIds = (id, event) => {
     text-align: right;
     color: #1e3a5f;
 }
-
-
 
 .footer-left {
     display: flex;
@@ -374,7 +428,6 @@ const HandleSelectIds = (id, event) => {
     font-weight: 600;
     color: #1e3a5f;
 }
-
 
 .page-select {
     padding: 6px 12px;
@@ -418,6 +471,15 @@ const HandleSelectIds = (id, event) => {
 
 .page-btn.active {
     background-color: #e9e9e9;
+}
+
+.no-data {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    font-size: 25px;
 }
 
 /* //icon  */

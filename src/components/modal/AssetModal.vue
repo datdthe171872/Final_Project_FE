@@ -23,7 +23,7 @@
             <div class="form-body">
                 <div class="row">
                     <div class="row-left">
-                        <TextInput required v-model="form.assetCode" label="Mã tài sản" :readonly="true" />
+                        <TextInput required v-model="form.assetCode" label="Mã tài sản" />
                     </div>
                     <div class="row-right">
                         <TextInput required v-model="form.assetName" label="Tên tài sản"
@@ -56,7 +56,12 @@
                     </div>
                     <div class="row-right">
                         <PriceInput required v-model="form.assetOriginalPrice" label="Nguyên giá"></PriceInput>
-                        <FloatInput required label="Tỷ lệ hao mòn" v-model="form.assetDepreciationRate"></FloatInput>
+                        <FloatInput required label="Tỷ lệ hao mòn (%)" v-model="form.assetDepreciationRate" @hasErr="
+                            (payload) => {
+                                hasErr = payload
+                            }
+                        ">
+                        </FloatInput>
                     </div>
                 </div>
                 <div class="row">
@@ -95,62 +100,62 @@
 <script setup>
 import { reactive, ref, watch } from 'vue'
 import BaseButtton from '../button/BaseButtton.vue'
-import { BUTTON_TYPE } from '@/commons/constant/constant';
-import TextInput from '../input/TextInput.vue';
-import SelectDropdown from '../input/SelectDropdown.vue';
-import NumberInput from '../input/NumberInput.vue';
-import PriceInput from '../input/PriceInput.vue';
-import FloatInput from '../input/FloatInput.vue';
-import DateInput from '../input/DateInput.vue';
-import BaseAlert from '../alert/BaseAlert.vue';
-import { AssetInput } from '@/commons/modal/Request';
-import CategoryAPI from '@/apis/component/CategoryAPI';
-import DepartmentAPI from '@/apis/component/DepartmentAPI';
-import AssetAPI from '@/apis/component/AssetAPI';
-import emitter from '@/bus/EventBus';
-const isOpen = ref(false);
+import { BUTTON_TYPE } from '@/commons/constant/constant'
+import TextInput from '../input/TextInput.vue'
+import SelectDropdown from '../input/SelectDropdown.vue'
+import NumberInput from '../input/NumberInput.vue'
+import PriceInput from '../input/PriceInput.vue'
+import FloatInput from '../input/FloatInput.vue'
+import DateInput from '../input/DateInput.vue'
+import BaseAlert from '../alert/BaseAlert.vue'
+import { AssetInput } from '@/commons/modal/Request'
+import CategoryAPI from '@/apis/component/CategoryAPI'
+import DepartmentAPI from '@/apis/component/DepartmentAPI'
+import AssetAPI from '@/apis/component/AssetAPI'
+import emitter from '@/bus/EventBus'
+const isOpen = ref(false)
+const hasErr = ref(false)
 const props = defineProps({
     title: String,
     data: {
         type: Object,
-        default: () => ({})
+        default: () => ({}),
     },
     type: {
         type: String,
-        validator: v => ['add', 'update', 'coppy'].includes(v),
-        default: 'add'
+        validator: (v) => ['add', 'update', 'coppy'].includes(v),
+        default: 'add',
     },
     show: {
         type: Boolean,
-        default: false
-    }
-
+        default: false,
+    },
 })
+
 //lấy dữ liệu categories từ BE
-const categories = ref([]);
+const categories = ref([])
 CategoryAPI.getAll().then((result) => {
     categories.value = result
 })
 //lấy dữ liệu departments từ BE
-const departments = ref([]);
+const departments = ref([])
 DepartmentAPI.getAll().then((result) => {
     departments.value = result
 })
 
-
 // clone props → tránh sửa trực tiếp props
 const form = reactive({ ...AssetInput })
-
 
 watch(
     () => form.categoryId,
     (newVal) => {
-        const selected = categories.value.find(item => item.categoryId === newVal)
+        const selected = categories.value.find((item) => item.categoryId === newVal)
         form.categoryName = selected ? selected.categoryName : form.categoryName
         form.assetUsageYear = selected ? selected.categoryYearUsage : form.assetUsageYear
-        form.assetDepreciationRate = selected ? selected.categoryDepreciationRate : form.assetDepreciationRate
-
-    }
+        form.assetDepreciationRate = selected
+            ? selected.categoryDepreciationRate
+            : form.assetDepreciationRate
+    },
 )
 const isfirst = ref(false)
 
@@ -158,15 +163,15 @@ watch(
     () => form.assetOriginalPrice,
     () => {
         if (!isfirst.value)
-            form.assetDepreciationYear = form.assetOriginalPrice * form.assetDepreciationRate / 100
-    }
+            form.assetDepreciationYear = (form.assetOriginalPrice * form.assetDepreciationRate) / 100
+    },
 )
 watch(
     () => form.departmentId,
     (newVal) => {
-        const selected = departments.value.find(item => item.departmentId === newVal)
+        const selected = departments.value.find((item) => item.departmentId === newVal)
         form.departmentName = selected ? selected.departmentName : form.departmentName
-    }
+    },
 )
 
 watch(
@@ -184,21 +189,16 @@ watch(
                 form.assetCode = result
             })
         }
-    }
+    },
 )
 
-
-
-
 const handleOpen = () => {
-    isOpen.value = true;
+    isOpen.value = true
 }
-//bắt sự kiện để xử lý
+//bắt sự kiện cancel để xử lý
 const handleCancel = (payload) => {
-    // đóng form
-    isOpen.value = false;
     if (payload) {
-        AssetAPI.update(form).then(() => {
+        AssetAPI.update(form, hasErr).then(() => {
             // đóng form
             isOpen.value = false
             //refresh form
@@ -208,15 +208,16 @@ const handleCancel = (payload) => {
         })
     }
     if (!payload) {
+        // đóng form
+        isOpen.value = false
         // refreshform
         refreshForm()
     }
 }
 
 const handleSubmit = () => {
-
     if (props.type == 'add' || props.type == 'coppy') {
-        AssetAPI.create(form).then(() => {
+        AssetAPI.create(form, hasErr.value).then(() => {
             // đóng form
             isOpen.value = false
             //refresh form
@@ -225,7 +226,7 @@ const handleSubmit = () => {
             emitter.emit('RefreshForm')
         })
     } else {
-        AssetAPI.update(form).then(() => {
+        AssetAPI.update(form, hasErr.value).then(() => {
             // đóng form
             isOpen.value = false
             //refresh form
@@ -238,8 +239,8 @@ const handleSubmit = () => {
 //binding data
 const refreshForm = () => {
     Object.assign(form, AssetInput)
+    hasErr.value = false
 }
-
 </script>
 <style scoped>
 /* Overlay phủ toàn màn hình */
@@ -260,10 +261,10 @@ const refreshForm = () => {
     height: 80vh;
     border-radius: 8px;
     background: #fefefe;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
-    animation: modalFadeIn .25s ease;
+    animation: modalFadeIn 0.25s ease;
     /* Ensure the footer stays at the bottom */
 }
 

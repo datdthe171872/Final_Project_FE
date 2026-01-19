@@ -1,5 +1,5 @@
 <template>
-    <button v-show="show" class="base-button" :class="[`btn-${type}`, { 'btn-icon-only': !label && icon }]"
+    <button tabindex="0" v-show="show" class="base-button" :class="[`btn-${type}`, { 'btn-icon-only': !label && icon }]"
         :disabled="disabled" @click="handleClick">
         <div class="icon" v-show="icon && !type == BUTTON_TYPE.ACTION">
             <div :class="icon"></div>
@@ -39,12 +39,14 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['click']);
+const emit = defineEmits(['click', 'shiftdown']);
 
 const handleClick = (e) => {
     if (props.disabled) return;
     emit('click', e);
 };
+
+
 </script>
 
 <style scoped>
@@ -116,7 +118,7 @@ const handleClick = (e) => {
 .btn-outline {
     background-color: white;
     border: 1px solid rgb(213, 213, 213);
-    color: black;
+    color: rgb(72, 72, 72);
 }
 
 
@@ -141,7 +143,7 @@ const handleClick = (e) => {
 .btn-close {
     background-color: white;
     border: none;
-    color: black;
+    color: rgb(89, 89, 89);
 }
 
 .btn-close:hover {

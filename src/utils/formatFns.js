@@ -10,40 +10,7 @@ export function formatNumber(num) {
   }
   return new Intl.NumberFormat('vi-VN').format(num)
 }
-/**
- * Hàm định dạng lại phần trăm
- *
- * @param {*} raw
- * @returns
- * createdby: dtdat - 1/11/2026
- */
-export function formatPercent(raw) {
-  if (checkEmpty(raw)) {
-    return -1
-  }
-  // Allow only digits and comma
-  raw = raw.replace(/[^\d,]/g, '')
-  // Only allow one comma
-  const parts = raw.split(',')
-  if (parts.length > 2) {
-    raw = parts[0] + ',' + parts.slice(1).join('')
-  }
-  let num = parseFloat(raw.replace(',', '.'))
-  if (isNaN(num) || num < 0) num = 0
 
-  // If over 100, show error and do not update model
-  if (num > 100) {
-    return -1
-  }
-  // If more than 2 decimals, keep input as is, but model only gets 2 decimals
-  if (raw.includes(',')) {
-    const [intPart, decPart] = raw.split(',')
-    if (decPart && decPart.length > 2) {
-      return parseFloat(intPart + '.' + decPart.slice(0, 2))
-    }
-  }
-  return num
-}
 /**
  * Hàm check trống
  * @param {*} value
@@ -81,6 +48,18 @@ export const formatVND = (value) => {
  * @returns
  * createdby: dtdat - 16/1/2026
  */
-export const isValidFloat = (value) => {
-  return /^[0-9]+(,[0-9]+)?$/.test(value)
+export function isValidFloat(value) {
+  return typeof value === 'number' && !isNaN(value)
+}
+
+/**
+ * lấy tỉ lệ màn hình
+ * @returns tỉ lệ màn hình
+ * createdby: dtdat - 16/1/2026
+ */
+export const getScreenSize = () => {
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }
 }

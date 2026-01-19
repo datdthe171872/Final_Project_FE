@@ -8,7 +8,7 @@ export const AssetInput = {
   departmentName: '',
   categoryId: null,
   categoryName: '',
-  assetQuantity: 0,
+  assetQuantity: 1,
   assetOriginalPrice: 0,
   assetDepreciationRate: 0.0,
   assetStartUsageDate: new Date().toISOString().slice(0, 10),

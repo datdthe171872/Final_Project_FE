@@ -70,9 +70,8 @@ const decrease = () => { if (model.value > 0) model.value-- }
 }
 
 label {
-    font-size: 14px;
+    font-size: 13px;
     margin-bottom: 8px;
-    font-weight: 500;
 }
 
 .required {

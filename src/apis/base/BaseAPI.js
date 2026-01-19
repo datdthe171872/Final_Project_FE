@@ -9,6 +9,8 @@ export default class BaseAPI {
 
   /**
    * Phương thức lấy tất cả dữ liệu
+   * @returns danh sách đối tượng chung
+   * createdby: dtdat - 16/1/2026
    */
   getAll() {
     return api
@@ -23,6 +25,13 @@ export default class BaseAPI {
         return null
       })
   }
+
+  /**
+   * Phương thức lấy tất cả dữ liệu
+   * @param {*} id
+   * @returns đối tuownjg có id đó
+   * createdby: dtdat - 16/1/2026
+   */
   getById(id) {
     //check null
     if (checkEmpty(id)) {
@@ -42,12 +51,23 @@ export default class BaseAPI {
         return null
       })
   }
-  create(body) {
+
+  /**
+   * Phương thức tạo mới dữ liệu
+   * @param {*} body
+   * @returns kết quả thêm mới  (True or False)
+   * createdby: dtdat - 16/1/2026
+   */
+  create(body, hasErr) {
+    if (hasErr) {
+      notifyError('Thông tin không hợp lệ')
+      return
+    }
     // validate đâu vào
     const isValid = ref(true)
     Object.entries(body).forEach(([key, value]) => {
       if (checkEmpty(value)) {
-        notifyError(`Vui lòng nhập đầy đủ thông tin trường ${key}`)
+        notifyError(`thông tin trường ${key} đang trống hoặc không phù hợp`)
         isValid.value = false
       }
     })
@@ -72,10 +92,24 @@ export default class BaseAPI {
   /**
    * Hàm cập nhật dữ liệu
    * @param {*} body
+   * @returns đối tượng cần cập nhật
    */
-  update(body) {
+  update(body, hasErr) {
+    if (hasErr) {
+      notifyError('Thông tin không hợp lệ')
+      return
+    }
     // validate đầu vào
-
+    const isValid = ref(true)
+    Object.entries(body).forEach(([key, value]) => {
+      if (checkEmpty(value)) {
+        notifyError(`thông tin trường ${key} đang trống hoặc không phù hợp`)
+        isValid.value = false
+      }
+    })
+    if (!isValid.value) {
+      return false
+    }
     return api
       .put(`${this.controller}`, body)
       .then(() => {
@@ -86,12 +120,14 @@ export default class BaseAPI {
         //bắt lỗi nghiệp vụ BE
         //show thông báo
         notifyError(err.response?.data?.Message)
+        console.log(err)
         return false
       })
   }
   /**
    * Hàm xóa bản ghi
    * @param {*} id
+   * @returns số bản ghi đã xóa
    */
   delete(id) {
     // check null

@@ -14,8 +14,11 @@
     <!-- sidebar-footer -->
     <div class="sidebar-footer">
       <button class="sidebar-button" @click="Handleshorten">
-        <div class="icon">
+        <div class="icon" v-if="!isShort">
           <div class="icon-shorten"></div>
+        </div>
+        <div class="icon" v-else>
+          <div class="icon-expand"></div>
         </div>
       </button>
     </div>
@@ -24,8 +27,11 @@
 <script setup>
 import { sidebarItems } from '@/commons/constant/constant';
 import SidebarItem from '@/components/sidebar/SidebarItem.vue';
+import { getScreenSize } from '@/utils/formatFns';
 import { ref } from 'vue';
 const isShort = ref(false)
+const obj = getScreenSize();
+isShort.value = obj.width < 1366 || obj.height < 768
 function Handleshorten() {
   isShort.value = !isShort.value
 }
@@ -91,6 +97,15 @@ function Handleshorten() {
   mask-repeat: no-repeat;
   background-color: #97989a;
   mask-position: -28px -290px;
+  width: 8px;
+  height: 12px;
+}
+
+.icon-expand {
+  mask-image: url("../assets/icon/qlts-icon.svg");
+  mask-repeat: no-repeat;
+  background-color: #97989a;
+  mask-position: -73px -290px;
   width: 8px;
   height: 12px;
 }

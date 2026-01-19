@@ -8,7 +8,12 @@ class AssetAPI extends BaseAPI {
     super()
     this.controller = 'Asset'
   }
-
+  /**
+   * Hàm lấy danh sách tài sản
+   * @param {*} payload
+   * @returns danh sách tài sản
+   * created by DTDat(18/1/2026)
+   */
   getAllNew(payload) {
     return api
       .get(`${this.controller}/new`, {
@@ -30,6 +35,11 @@ class AssetAPI extends BaseAPI {
         return null
       })
   }
+  /**
+   * Hàm lấy AssetCOde mới
+   * @returns AssetCode mới
+   * created by DTDat(18/1/2026)
+   */
   getNewCode() {
     return api
       .get(`${this.controller}/code`)
@@ -43,16 +53,22 @@ class AssetAPI extends BaseAPI {
         return null
       })
   }
+  /**
+   * Hàm xóa nhiều tài sản
+   * @param {*} payload (danh sách id tài sản muốn xóa)
+   * @returns AssetCode mới
+   * created by DTDat(18/1/2026)
+   */
   deleteMany(payload) {
     //check null
-    if (payload?.ids == null) {
+    if (payload?.assetIds == null) {
       notifyError('Bạn không chọn tài sản nào để xóa')
       return null
     }
     return api
       .post(`${this.controller}/delete-multiple`, payload)
       .then((result) => {
-        notifySuccess(`Đã xóa thành công ${result.data} tài sa`)
+        notifySuccess(`Đã xóa thành công ${result.data} tài sản`)
         return result.data
       })
       .catch((err) => {

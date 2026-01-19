@@ -7,6 +7,7 @@ export const sidebarItems = [
   { icon: 'icon-search', title: 'Tra cứu', active: false, more: true },
   { icon: 'icon-report', title: 'Báo cáo', active: false, more: true },
 ]
+
 export const BUTTON_TYPE = {
   MAIN: 'main',
   SUB: 'sub',
@@ -25,11 +26,13 @@ export const AssetColumnsEng = [
   { id: 'depreciationCumulative', label: 'HM/KH lũy kế', type: 'number' },
   { id: 'remainValue', label: 'Giá trị còn lại', type: 'number' },
 ]
+
 export const pageSizeOptions = [20, 50, 100]
 
 export const tableType = {
   ASSET: 'asset',
 }
+
 export const TOAST_TYPE = {
   SUCCESS: 'success',
   ERROR: 'error',

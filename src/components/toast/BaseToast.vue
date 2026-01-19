@@ -1,7 +1,15 @@
 <template>
     <div class="toast-container">
         <div v-for="toast in toasts" :key="toast.id" :class="['toast', toast.type]">
-            {{ toast.message }}
+            <div class="icon-round" v-if="toast.type == 'success'">
+                <div class="icon">✓</div>
+            </div>
+            <div class="icon-round-error" v-else>
+                <div class="icon-error">!</div>
+            </div>
+            <div class="message">
+                {{ toast.message }}
+            </div>
         </div>
     </div>
 </template>
@@ -25,7 +33,7 @@ function addToast(toast) {
     toasts.value.push({ ...toast, id })
 
     setTimeout(() => {
-        toasts.value = toasts.value.filter(t => t.id !== id)
+        toasts.value = toasts.value.filter((t) => t.id !== id)
     }, 3000)
 }
 </script>
@@ -67,10 +75,46 @@ function addToast(toast) {
 }
 
 .icon {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    background: #52c41a;
+    background: #16c27d;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.icon-round {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #afe893;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.icon-error {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: red;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.icon-round-error {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgb(244, 126, 126);
     color: white;
     display: flex;
     align-items: center;

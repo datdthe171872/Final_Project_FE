@@ -50,9 +50,8 @@ defineProps({
 }
 
 .input-label {
-    font-size: 14px;
+    font-size: 13px;
     margin-bottom: 8px;
-    font-weight: 500;
 }
 
 .text-input {

@@ -8,9 +8,7 @@
                 <div class="icon">
                     <div class="icon-alert"></div>
                 </div>
-                <div class="content">
-                    Bạn có muốn hủy bỏ khai báo tài sản này không ?
-                </div>
+                <div class="content">Bạn có muốn hủy bỏ khai báo tài sản này không ?</div>
             </div>
             <!-- Footer -->
             <div class="form-footer">
@@ -25,7 +23,8 @@
                     <div class="icon-alert"></div>
                 </div>
                 <div class="content">
-                    Thông tin thay đổi sẽ không được cập nhật nếu bạn không lưu .Bạn có muốn lưu các thay đổi này
+                    Thông tin thay đổi sẽ không được cập nhật nếu bạn không lưu .Bạn có muốn lưu các thay đổi
+                    này
                 </div>
             </div>
             <!-- Footer -->
@@ -54,81 +53,119 @@
                 <BaseButtton :type="BUTTON_TYPE.MAIN" label="Xóa" @click="handleDelete"></BaseButtton>
             </div>
         </div>
-
     </div>
 </template>
 <script setup>
-import AssetAPI from '@/apis/component/AssetAPI';
+import AssetAPI from '@/apis/component/AssetAPI'
 import BaseButtton from '../button/BaseButtton.vue'
-import { BUTTON_TYPE } from '@/commons/constant/constant';
-import { reactive, ref } from 'vue';
-import emitter from '@/bus/EventBus';
+import { BUTTON_TYPE } from '@/commons/constant/constant'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import emitter from '@/bus/EventBus'
 const emit = defineEmits(['cancel'])
-const isOpen = ref(false);
-const assetName = ref('');
+const isOpen = ref(false)
+const assetName = ref('')
 const assetCode = ref('')
 const props = defineProps({
     icon: {
-        type: String
+        type: String,
     },
     label: {
-        type: String
+        type: String,
     },
     type: {
         type: String,
-        validator: v => ['add', 'update', 'delete'].includes(v),
-        default: 'add'
+        validator: (v) => ['add', 'update', 'delete'].includes(v),
+        default: 'add',
     },
     data: {
         type: Array,
-    }
+    },
+    disable: {
+        type: Boolean,
+        default: false,
+    },
 })
 
 const handleOpen = () => {
-    isOpen.value = true;
-    //nếu update thì sẽ gọi api lấy tên asset
-    if (props.type == 'delete') {
-        if (props.data.length == 0) isOpen.value = false
-        AssetAPI.getById(props.data[0]).then((res) => {
-            //thành công thì lấy dữ liệu ra
-            assetName.value = res.assetName
-            assetCode.value = res.assetCode
-        })
+    if (props.type != 'delete') {
+        isOpen.value = true
+    } else {
+        switch (props.data.length) {
+            case 0:
+                isOpen.value = false
+                AssetAPI.getById(props.data[0]).then((res) => {
+                    //thành công thì lấy dữ liệu ra
+                    assetName.value = res.assetName
+                    assetCode.value = res.assetCode
+                })
+                break
+            case 1:
+                isOpen.value = true
+                AssetAPI.getById(props.data[0]).then((res) => {
+                    //thành công thì lấy dữ liệu ra
+                    assetName.value = res.assetName
+                    assetCode.value = res.assetCode
+                })
+                break
+            default:
+                isOpen.value = true
+                break
+        }
     }
 }
 const handleClose = () => {
-
-    isOpen.value = false;
+    isOpen.value = false
 }
 // tắt của form add
 const handleCancel = () => {
-    isOpen.value = false;
-    emit('cancel');
+    isOpen.value = false
+    emit('cancel')
 }
 //tắt của form update
 // lưu
 const handleCancelSave = () => {
-    isOpen.value = false;
-    emit('cancel', true);
+    isOpen.value = false
+    emit('cancel', true)
 }
 // ko lưu
 const handleCancelNoSave = () => {
-    isOpen.value = false;
-    emit('cancel', false);
+    isOpen.value = false
+    emit('cancel', false)
 }
 //xóa
 const handleDelete = () => {
     AssetAPI.deleteMany({
-        Ids: [...props.data]
+        assetIds: [...props.data],
+    }).then(() => {
+        //clear danh sách delete
+        emitter.emit('ClearAssetIds', [])
+        //refresh table
+        emitter.emit('RefreshForm')
+        //đóng alert
+        isOpen.value = false
     })
-    //refresh table
-    emitter.emit('RefreshForm')
-    //đóng alert
-    isOpen.value = false;
+}
+function globalKeyHandler(e) {
+    // Mở modal delete
+    if (!isOpen.value && e.shiftKey && e.code === 'Space' && props.type === 'delete') {
+        handleOpen()
+        return
+    }
+
+    // Xác nhận delete khi modal mở
+    if (e.code === 'Enter' && isOpen.value && e.shiftKey) {
+        e.preventDefault()
+        handleDelete()
+    }
 }
 
+onMounted(() => {
+    window.addEventListener('keydown', globalKeyHandler, true)
+})
 
-
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', globalKeyHandler, true)
+})
 </script>
 <style scoped>
 .modal-overlay {
@@ -149,10 +186,10 @@ const handleDelete = () => {
     border-radius: 8px;
     padding: 3vh 3vh;
     background: #fefefe;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
-    animation: modalFadeIn .25s ease;
+    animation: modalFadeIn 0.25s ease;
     /* Ensure the footer stays at the bottom */
 }
 
@@ -190,6 +227,5 @@ const handleDelete = () => {
     width: 24px;
     height: 20px;
     transform: scale(2.5);
-
 }
 </style>

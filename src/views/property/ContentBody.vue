@@ -32,6 +32,7 @@ const renderData = (formPaging) => {
 
 //bắt sự kiện sau khi lưu (insert,update,delete)đc gửi từ con để refresh data
 const handleRefresh = () => {
+
   renderData(formPaging)
   form.pageIndex = 1
   form.pageSize = pageSizeOptions[0]

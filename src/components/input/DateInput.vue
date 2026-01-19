@@ -62,7 +62,7 @@ const onChange = (e) => {
 }
 
 label {
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .required {
