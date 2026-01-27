@@ -78,6 +78,19 @@ class AssetAPI extends BaseAPI {
         return null
       })
   }
+
+  export() {
+    return api
+      .get(`${this.controller}/export`, {
+        responseType: 'blob',
+      })
+      .then((result) => {
+        return result
+      })
+      .catch((err) => {
+        notifyError(err.response?.data?.Message)
+      })
+  }
 }
 
 export default new AssetAPI()

@@ -53,6 +53,20 @@
                 <BaseButtton :type="BUTTON_TYPE.MAIN" label="Xóa" @click="handleDelete"></BaseButtton>
             </div>
         </div>
+        <div v-else class="asset-form">
+            <!-- Body -->
+            <div class="form-body">
+                <div class="icon">
+                    <div class="icon-alert"></div>
+                </div>
+                <div class="content">Bạn có muốn xuất danh sách tài sản ra file excel không ?</div>
+            </div>
+            <!-- Footer -->
+            <div class="form-footer">
+                <BaseButtton label="Không" :type="BUTTON_TYPE.OUTLINE" @click="handleClose"></BaseButtton>
+                <BaseButtton :type="BUTTON_TYPE.MAIN" label="Xuất File" @click="handleExport"></BaseButtton>
+            </div>
+        </div>
     </div>
 </template>
 <script setup>
@@ -74,7 +88,7 @@ const props = defineProps({
     },
     type: {
         type: String,
-        validator: (v) => ['add', 'update', 'delete'].includes(v),
+        validator: (v) => ['add', 'update', 'delete', 'export'].includes(v),
         default: 'add',
     },
     data: {
@@ -143,6 +157,24 @@ const handleDelete = () => {
         emitter.emit('RefreshForm')
         //đóng alert
         isOpen.value = false
+    })
+}
+//xuất file
+const handleExport = () => {
+    AssetAPI.export().then((result) => {
+        const blob = new Blob([result.data], {
+            type: result.headers['content-type'],
+        })
+        const url = window.URL.createObjectURL(blob)
+        //tạo thẻ a để download
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'Asset.xlsx'
+        document.body.appendChild(a)
+        a.click()
+
+        document.body.removeChild(a)
+        window.URL.revokeObjectURL(url)
     })
 }
 function globalKeyHandler(e) {

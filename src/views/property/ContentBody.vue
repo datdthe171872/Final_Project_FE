@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import BaseTable from '@/components/table/BaseTable.vue';
-import { AssetColumnsEng, pageSizeOptions } from '@/commons/constant/constant';
-import { onBeforeMount, onUnmounted, reactive, ref } from 'vue';
-import AssetAPI from '@/apis/component/AssetAPI';
-import emitter from '@/bus/EventBus';
-import { formPaging } from '@/commons/modal/Request';
-const isLoaded = ref(false);
+import BaseTable from '@/components/table/BaseTable.vue'
+import { AssetColumnsEng, pageSizeOptions } from '@/commons/constant/constant'
+import { onBeforeMount, onUnmounted, reactive, ref } from 'vue'
+import AssetAPI from '@/apis/component/AssetAPI'
+import emitter from '@/bus/EventBus'
+import { formPaging } from '@/commons/modal/Request'
+const isLoaded = ref(false)
 //default
 const form = reactive({
   pageSize: formPaging.PageSize,
   pageIndex: formPaging.PageIndex,
-  total: 0
-});
+  total: 0,
+})
 const listAsset = ref([])
 AssetAPI.getAllNew(formPaging).then((result) => {
   listAsset.value = result
   form.total = listAsset.value[0] ? listAsset.value[0].total : form.total
-  isLoaded.value = true;
+  isLoaded.value = true
 })
 
 //render data hàm
@@ -26,13 +26,13 @@ const renderData = (formPaging) => {
     form.total = listAsset.value[0] ? listAsset.value[0].total : form.total
     form.pageIndex = formPaging.PageIndex
     form.pageSize = formPaging.PageSize
-    isLoaded.value = true;
+    isLoaded.value = true
+    console.log(formPaging)
   })
 }
 
 //bắt sự kiện sau khi lưu (insert,update,delete)đc gửi từ con để refresh data
 const handleRefresh = () => {
-
   renderData(formPaging)
   form.pageIndex = 1
   form.pageSize = pageSizeOptions[0]
@@ -54,20 +54,20 @@ const hanleChangePage = (pageIndex) => {
   renderData(formPaging)
 }
 
-//bắt sự kiến thay đổi 
+//bắt sự kiến thay đổi
 onBeforeMount(() => {
-  emitter.on('RefreshForm', handleRefresh);
-  emitter.on('SearchFilter', handleSearchFilter);
-  emitter.on('pageSizeChange', handleChangePageSize);
-  emitter.on('pageChange', hanleChangePage);
-});
+  emitter.on('RefreshForm', handleRefresh)
+  emitter.on('SearchFilter', handleSearchFilter)
+  emitter.on('pageSizeChange', handleChangePageSize)
+  emitter.on('pageChange', hanleChangePage)
+})
 
 onUnmounted(() => {
-  emitter.off('RefreshForm', handleRefresh);
-  emitter.off('SearchFilter', handleSearchFilter);
-  emitter.off('pageSizeChange', handleChangePageSize);
-  emitter.off('pageChange', hanleChangePage);
-});
+  emitter.off('RefreshForm', handleRefresh)
+  emitter.off('SearchFilter', handleSearchFilter)
+  emitter.off('pageSizeChange', handleChangePageSize)
+  emitter.off('pageChange', hanleChangePage)
+})
 </script>
 
 <template>

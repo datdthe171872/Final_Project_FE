@@ -20,37 +20,33 @@
       </div>
       <div class="header-actions">
         <AssetModal title="Thêm tài sản " type="add"></AssetModal>
-        <BaseButtton icon="icon-excel" :type="BUTTON_TYPE.OUTLINE">
-        </BaseButtton>
-        <BaseAlert icon="icon-delete" type="delete" :data="listIds">
-        </BaseAlert>
+        <BaseAlert icon="icon-excel" type="excel"></BaseAlert>
+        <BaseAlert icon="icon-delete" type="delete" :data="listIds"> </BaseAlert>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import CategoryAPI from '@/apis/component/CategoryAPI';
-import DepartmentAPI from '@/apis/component/DepartmentAPI';
-import emitter from '@/bus/EventBus';
-import { BUTTON_TYPE } from '@/commons/constant/constant';
-import BaseButtton from '@/components/button/BaseButtton.vue';
-import SearchInput from '@/components/input/SearchInput.vue';
-import SelectDropdown from '@/components/input/SelectDropdown.vue';
-import AssetModal from '@/components/modal/AssetModal.vue';
-import { onBeforeMount, onUnmounted, reactive, ref, watch } from 'vue';
-import { formPaging } from '@/commons/modal/Request';
-import BaseAlert from '@/components/alert/BaseAlert.vue';
+import CategoryAPI from '@/apis/component/CategoryAPI'
+import DepartmentAPI from '@/apis/component/DepartmentAPI'
+import emitter from '@/bus/EventBus'
+import SearchInput from '@/components/input/SearchInput.vue'
+import SelectDropdown from '@/components/input/SelectDropdown.vue'
+import AssetModal from '@/components/modal/AssetModal.vue'
+import { onBeforeMount, onUnmounted, reactive, ref, watch } from 'vue'
+import { formPaging } from '@/commons/modal/Request'
+import BaseAlert from '@/components/alert/BaseAlert.vue'
 
 // clone props → tránh sửa trực tiếp props
 const form = reactive({ ...formPaging })
 //lấy dữ liệu categories từ BE
-const categories = ref([]);
+const categories = ref([])
 CategoryAPI.getAll().then((result) => {
   categories.value = result
 })
 //lấy dữ liệu departments từ BE
-const departments = ref([]);
+const departments = ref([])
 DepartmentAPI.getAll().then((result) => {
   departments.value = result
 })
@@ -58,38 +54,37 @@ DepartmentAPI.getAll().then((result) => {
 watch(
   () => form.CategoryId,
   () => {
-
     emitter.emit('SearchFilter', form)
-  }
+  },
 )
 //thay đổi bộ phận sử dụng thì emit sang body
 watch(
   () => form.DepartmentId,
   () => {
     emitter.emit('SearchFilter', form)
-  }
+  },
 )
 //thay đổi search thì emit sang body
 watch(
   () => form.SearchKeyword,
   () => {
     emitter.emit('SearchFilter', form)
-  }
+  },
 )
-//delete 
-const listIds = ref([]);
+//delete
+const listIds = ref([])
 //lấy danh sách id mà thg table truyền lên
 const DeleteInput = (payload) => {
   listIds.value = payload ? payload : []
 }
 
 onBeforeMount(() => {
-  emitter.on('DeleteMany', DeleteInput);
-});
+  emitter.on('DeleteMany', DeleteInput)
+})
 
 onUnmounted(() => {
-  emitter.off('DeleteMany', DeleteInput);
-});
+  emitter.off('DeleteMany', DeleteInput)
+})
 </script>
 
 <style scoped>
@@ -122,10 +117,6 @@ onUnmounted(() => {
   gap: 16px;
   align-items: center;
 }
-
-
-
-
 
 .filter-group {
   display: flex;

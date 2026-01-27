@@ -27,7 +27,7 @@ export const AssetColumnsEng = [
   { id: 'remainValue', label: 'Giá trị còn lại', type: 'number' },
 ]
 
-export const pageSizeOptions = [20, 50, 100]
+export const pageSizeOptions = [20, 50, 80]
 
 export const tableType = {
   ASSET: 'asset',
