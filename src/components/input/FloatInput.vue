@@ -5,7 +5,8 @@
             <span v-if="required" class="required">*</span>
         </label>
 
-        <input type="text" :class="{ error: hasError }" :value="displayValue" @keydown="onKeydown" @input="onInput" />
+        <input type="text" :class="{ error: hasError }" :value="displayValue" @keydown="onKeydown" @input="onInput"
+            @blur="onBlur" />
 
 
         <p v-if="hasError" class="error-text">
@@ -56,6 +57,12 @@ const onInput = (e) => {
     else emit('hasErr', false)
 }
 
+const onBlur = (e) => {
+    if (e.target.value === '') {
+        displayValue.value = 0
+        model.value = 0
+    }
+}
 
 
 </script>
